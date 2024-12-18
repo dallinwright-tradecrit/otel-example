@@ -31,7 +31,7 @@ fn resource() -> Resource {
     )
 }
 
-fn init_tracer(service_name: String) -> TracerProvider {
+fn init_tracer() -> TracerProvider {
     global::set_text_map_propagator(TraceContextPropagator::new());
 
     let exporter: opentelemetry_otlp::SpanExporter = opentelemetry_otlp::SpanExporter::builder()
@@ -57,7 +57,7 @@ fn init_tracer(service_name: String) -> TracerProvider {
 }
 
 // Construct MeterProvider for MetricsLayer
-fn init_meter_provider(service_name: String) -> SdkMeterProvider {
+fn init_meter_provider() -> SdkMeterProvider {
     let exporter = opentelemetry_otlp::MetricExporter::builder()
         .with_tonic()
         .with_endpoint("grpc://localhost:4317")
@@ -88,7 +88,7 @@ fn init_meter_provider(service_name: String) -> SdkMeterProvider {
     meter_provider
 }
 
-fn init_logs(service_name: String) -> LoggerProvider {
+fn init_logs() -> LoggerProvider {
     let exporter: opentelemetry_otlp::LogExporter = opentelemetry_otlp::LogExporter::builder()
         .with_tonic()
         .with_endpoint("grpc://localhost:4317")
@@ -118,7 +118,9 @@ fn test_print_inner() {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let service_name = "sandbox".to_string();
+    let logger_provider: LoggerProvider = init_logs();
+
+    let logger_layer = OpenTelemetryTracingBridge::new(&logger_provider);
 
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_target(true)
@@ -129,17 +131,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_level(true)
         .with_ansi(true);
 
-    let tracer_provider: TracerProvider = init_tracer(service_name.clone());
-    let logger_provider: LoggerProvider = init_logs(service_name.clone());
-    let meter_provider: SdkMeterProvider = init_meter_provider(service_name.clone());
-
-    let tracer = tracer_provider.tracer("sandbox");
-    let tracing_layer: OpenTelemetryLayer<Registry, Tracer> = tracing_opentelemetry::layer().with_tracer(tracer);
-
     tracing_subscriber::registry()
-        .with(tracing_layer)
+        .with(logger_layer)
         .with(fmt_layer)
         .init();
+
+    let tracer_provider: TracerProvider = init_tracer();
+    let meter_provider: SdkMeterProvider = init_meter_provider();
 
     test_print();
 

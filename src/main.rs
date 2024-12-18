@@ -1,43 +1,56 @@
 use std::time::Duration;
+use opentelemetry::global;
 use opentelemetry::trace::{TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::Resource;
+use opentelemetry_sdk::{trace, Resource};
+use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::trace::{Tracer, TracerProvider};
-use tracing::{span};
+
+use tracing::{instrument, subscriber};
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::Registry;
+use tracing_subscriber::util::SubscriberInitExt;
 
+fn init_tracer(service_name: String) -> TracerProvider {
+    global::set_text_map_propagator(TraceContextPropagator::new());
 
-fn init_tracer(service_name: &String) -> TracerProvider {
-    let exporter = opentelemetry_otlp::SpanExporter::builder()
+    let exporter: opentelemetry_otlp::SpanExporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()
         .with_endpoint("grpc://localhost:4317")
         .with_protocol(opentelemetry_otlp::Protocol::Grpc)
         .with_timeout(Duration::from_secs(3))
         .build()
-        .expect("Failed to create OTLP trace exporter");
+        .expect("Failed to create OTLP span exporter");
 
     let provider = TracerProvider::builder()
-        .with_simple_exporter(exporter)
+        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio)
+        .with_id_generator(trace::RandomIdGenerator::default())
+        .with_max_attributes_per_span(16)
+        .with_max_events_per_span(16)
+        .with_max_links_per_span(16)
         .with_resource(Resource::new(vec![
-            opentelemetry::KeyValue::new("service.name", service_name.clone()),
+            opentelemetry::KeyValue::new("service.name", service_name),
         ]))
         .build();
 
     provider
 }
 
+#[instrument(level = "info", name = "outer_child")]
+fn test_print() {
+    tracing::info!("Attempting outer_child test_print");
+    test_print_inner();
+}
+
+#[instrument(level = "info", name = "inner_child")]
+fn test_print_inner() {
+    tracing::info!("Attempting inner_child test_print");
+}
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let service_name = "sandbox".to_string();
-
-    let tracer_provider = init_tracer(&service_name);
-
-    let tracer: Tracer = tracer_provider.tracer("main");
-
-    // Create a tracing layer with the configured tracer
-    let telemetry: OpenTelemetryLayer<Registry, Tracer> = tracing_opentelemetry::layer().with_tracer(tracer);
 
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_target(true)
@@ -48,15 +61,19 @@ async fn main() {
         .with_level(true)
         .with_ansi(true);
 
-    let subscriber = Registry::default()
+
+    let tracer_provider = init_tracer(service_name);
+    let tracer: Tracer = tracer_provider.tracer("main");
+    let telemetry: OpenTelemetryLayer<Registry, Tracer> = tracing_opentelemetry::layer().with_tracer(tracer);
+
+    let subscriber = tracing_subscriber::registry()
         .with(telemetry)
         .with(fmt_layer);
 
     tracing::subscriber::with_default(subscriber, || {
-        // Spans will be sent to the configured OpenTelemetry exporter
-        let root = span!(tracing::Level::INFO, "app_start", work_units = 2);
-        let _enter = root.enter();
-
-        tracing::info!("This event will be logged in the root span.");
+        test_print();
     });
+
+
+    Ok(())
 }

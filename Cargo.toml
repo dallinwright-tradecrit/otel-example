@@ -8,8 +8,11 @@ tokio = { version = "1", features = ["full"] }
 
 opentelemetry = { version = "0.27.1", default-features = false, features = ["trace"] }
 opentelemetry_sdk = { version = "0.27.1", default-features = false, features = ["trace", "rt-tokio", "tracing", "async-trait"] }
-opentelemetry-otlp = { version = "0.27.0", features = ["metrics"] }
+opentelemetry-otlp = { version = "0.27.0", features = ["metrics", "logs", "populate-logs-event-name", "grpc-tonic"] }
 
 tracing = { version = "0.1.41", default-features = false, features = ["std", "attributes", "async-await", "tracing-attributes"] }
 tracing-subscriber = { version = "0.3.19", default-features = false, features = ["registry", "std", "chrono", "ansi"] }
 tracing-opentelemetry = { version = "0.28.0", features = ["metrics", "tracing-log", "async-trait"] }
+
+tracing-log = "0.2.0"
+log = "0.4.22"

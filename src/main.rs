@@ -39,11 +39,19 @@ async fn main() {
     // Create a tracing layer with the configured tracer
     let telemetry: OpenTelemetryLayer<Registry, Tracer> = tracing_opentelemetry::layer().with_tracer(tracer);
 
-    // Use the tracing subscriber `Registry`, or any other subscriber
-    // that impls `LookupSpan`
-    let subscriber = Registry::default().with(telemetry);
+    let fmt_layer = tracing_subscriber::fmt::layer()
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_timer(tracing_subscriber::fmt::time::ChronoUtc::rfc_3339())
+        .with_span_events(tracing_subscriber::fmt::format::FmtSpan::CLOSE)
+        .with_level(true)
+        .with_ansi(true);
 
-    // Trace executed code
+    let subscriber = Registry::default()
+        .with(telemetry)
+        .with(fmt_layer);
+
     tracing::subscriber::with_default(subscriber, || {
         // Spans will be sent to the configured OpenTelemetry exporter
         let root = span!(tracing::Level::INFO, "app_start", work_units = 2);

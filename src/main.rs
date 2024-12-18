@@ -34,6 +34,8 @@ fn init_tracer(service_name: String) -> TracerProvider {
         ]))
         .build();
 
+    global::set_tracer_provider(provider.clone());
+
     provider
 }
 
@@ -61,19 +63,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_level(true)
         .with_ansi(true);
 
+    let tracer_provider: TracerProvider = init_tracer(service_name);
+    let tracer = tracer_provider.tracer("sandbox");
 
-    let tracer_provider = init_tracer(service_name);
-    let tracer: Tracer = tracer_provider.tracer("main");
     let telemetry: OpenTelemetryLayer<Registry, Tracer> = tracing_opentelemetry::layer().with_tracer(tracer);
-
     let subscriber = tracing_subscriber::registry()
         .with(telemetry)
-        .with(fmt_layer);
+        .with(fmt_layer)
+        .init();
 
-    tracing::subscriber::with_default(subscriber, || {
-        test_print();
-    });
+    test_print();
 
+    // Shutdown trace pipeline
+    tracer_provider.shutdown().expect("TracerProvider should shutdown successfully");
 
     Ok(())
 }

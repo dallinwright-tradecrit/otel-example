@@ -219,7 +219,10 @@ checksum = "7e36cc9d416881d2e24f9a963be5fb1cd90966419ac844274161d10488b3e825"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
+ "serde",
+ "wasm-bindgen",
  "windows-targets",
 ]
 
@@ -1543,6 +1546,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 name = "sandbox"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "log",
  "opentelemetry",
  "opentelemetry-appender-tracing",

@@ -52,3 +52,9 @@ services:
     volumes:
       - "./grafana/definitions:/var/lib/grafana/dashboards"
       - "./grafana/provisioning:/etc/grafana/provisioning"
+
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"
+    command: ["server", "-self-profiling.disable-push=true"]

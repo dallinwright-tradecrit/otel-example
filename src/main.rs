@@ -1,5 +1,4 @@
-
-
+use chrono::Utc;
 use telemetry_rust::TelemetryProvider;
 use telemetry_rust::TelemetryProviderConfig;
 use opentelemetry::KeyValue;
@@ -13,7 +12,7 @@ use opentelemetry_semantic_conventions::{
 
 #[instrument(level = "info", name = "outer_child")]
 fn test_print() {
-    tracing::info!("Attempting outer_child test_print event");
+    tracing::info!("Attempting outer_child test_print event at {:?}", Utc::now());
     log::info!("Attempting outer_child test_print log");
     test_print_inner();
 }
@@ -41,11 +40,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let telemetry_provider = TelemetryProvider::new(telemetry_provider_config);
+    let agent = telemetry_rust::profiler::create("http://localhost:4040", "test-service")?;
+    let agent_running = agent.start()?;
 
-    test_print();
-
-    // Shutdown pipelines
-    telemetry_provider.shutdown();
-
-    Ok(())
+    loop {
+        test_print();
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    }
 }

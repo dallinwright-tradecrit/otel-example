@@ -5,7 +5,6 @@ use telemetry_rust::TelemetryProviderConfig;
 use opentelemetry::KeyValue;
 use opentelemetry_sdk::Resource;
 use tracing::instrument;
-use tracing_opentelemetry::OpenTelemetryLayer;
 
 use opentelemetry_semantic_conventions::{
     attribute::SERVICE_NAME,

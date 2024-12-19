@@ -11,14 +11,16 @@ processors:
 
 exporters:
   otlphttp/logs:
-    endpoint: http://localhost:3100/otlp
+    endpoint: http://loki:3100/otlp
   otlphttp/traces:
-    endpoint: http://localhost:3200/otlp
-  debug/metrics:
-    verbosity: detailed
+    endpoint: http://tempo:4418
+  otlphttp/metrics:
+    endpoint: http://mimir:9009/api/v1/otlp
   debug/traces:
     verbosity: detailed
   debug/logs:
+    verbosity: detailed
+  debug/metrics:
     verbosity: detailed
 
 service:
@@ -31,3 +33,7 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlphttp/logs]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/metrics]

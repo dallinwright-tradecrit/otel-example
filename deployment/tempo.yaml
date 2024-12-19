@@ -1,28 +1,15 @@
-# For more information on this configuration, see the complete reference guide at
-# https://grafana.com/docs/tempo/latest/configuration/
-
-# Enables result streaming from Tempo (to Grafana) via HTTP.
-stream_over_http_enabled: true
-
-# Configure the server block.
 server:
-  # Listen for all incoming requests on port 3200.
   http_listen_port: 3200
+  grpc_listen_port: 9096
 
-# The distributor receives incoming trace span data for the system.
 distributor:
-  receivers:             # This configuration will listen on all ports and protocols that tempo is capable of.
-    jaeger:              # The receivers all come from the OpenTelemetry collector.  More configuration information can
-      protocols:         # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-        thrift_http:     #
-        grpc:            # For a production deployment you should only enable the receivers you need!
-        thrift_binary:   #
-        thrift_compact:
+  receivers:
     otlp:
       protocols:
+        grpc:
+          endpoint: "tempo:4417"
         http:
-        grpc:            # This example repository only utilises the OTLP gRPC receiver on port 4317.
-    zipkin:              # Receive trace data in any supported Zipkin format.
+          endpoint: "tempo:4418"
 
 # The ingester receives data from the distributor and processes it into indices and blocks.
 ingester:
@@ -61,24 +48,24 @@ metrics_generator:
   processor:
     # Span metrics create metrics based on span type, duration, name and service.
     span_metrics:
-        # Configure extra dimensions to add as metric labels.
-        dimensions:
-          - http.method
-          - http.target
-          - http.status_code
-          - service.version
+      # Configure extra dimensions to add as metric labels.
+      dimensions:
+        - http.method
+        - http.target
+        - http.status_code
+        - service.version
     # Service graph metrics create node and edge metrics for determinng service interactions.
     service_graphs:
-        # Configure extra dimensions to add as metric labels.
-        dimensions:
-          - http.method
-          - http.target
-          - http.status_code
-          - service.version
+      # Configure extra dimensions to add as metric labels.
+      dimensions:
+        - http.method
+        - http.target
+        - http.status_code
+        - service.version
     # Configure the local blocks processor.
     local_blocks:
-        # Ensure that metrics blocks are flushed to storage so TraceQL metrics queries against historical data.
-        flush_to_storage: true
+      # Ensure that metrics blocks are flushed to storage so TraceQL metrics queries against historical data.
+      flush_to_storage: true
   # The registry configuration determines how to process metrics.
   registry:
     collection_interval: 5s                 # Create new metrics every 5s.

@@ -19,6 +19,22 @@ services:
     image: grafana/loki:latest
     ports:
       - "3100:3100"
+    command: [ "--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml" ]
     volumes:
-      - ./loki.yaml:/etc/loki/local-config.yaml
-    command: ["-config.file=/etc/loki/local-config.yaml"]
+      - ./loki.yaml:/etc/loki/loki.yaml
+
+  tempo:
+    image: grafana/tempo:latest
+    ports:
+      - "3200:3200"
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - "./tempo.yaml:/etc/tempo.yaml"
+
+  mimir:
+    image: grafana/mimir:latest
+    command: ["-ingester.native-histograms-ingestion-enabled=true", "-config.file=/etc/mimir.yaml"]
+    ports:
+      - "9009:9009"
+    volumes:
+      - "./mimir.yaml:/etc/mimir.yaml"

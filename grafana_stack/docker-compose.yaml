@@ -12,7 +12,7 @@ services:
       - "4318:4318" # OTLP http receiver
       - "55679:55679" # zpages extension
     volumes:
-      - ./otel.yaml:/etc/otel-collector-config.yml
+      - ./configs/otel.yaml:/etc/otel-collector-config.yml
     command: ["--config=/etc/otel-collector-config.yml"]
 
   loki:
@@ -21,7 +21,7 @@ services:
       - "3100:3100"
     command: [ "--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml" ]
     volumes:
-      - ./loki.yaml:/etc/loki/loki.yaml
+      - ./configs/loki.yaml:/etc/loki/loki.yaml
 
   tempo:
     image: grafana/tempo:latest
@@ -29,7 +29,7 @@ services:
       - "3200:3200"
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
-      - "./tempo.yaml:/etc/tempo.yaml"
+      - "./configs/tempo.yaml:/etc/tempo.yaml"
 
   mimir:
     image: grafana/mimir:latest
@@ -37,7 +37,7 @@ services:
     ports:
       - "9009:9009"
     volumes:
-      - "./mimir.yaml:/etc/mimir.yaml"
+      - "./configs/mimir.yaml:/etc/mimir.yaml"
 
   grafana:
     image: grafana/grafana:latest
@@ -50,8 +50,8 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     volumes:
-      - "./grafana/definitions:/var/lib/grafana/dashboards"
-      - "./grafana/provisioning:/etc/grafana/provisioning"
+      - "./configs/grafana/definitions:/var/lib/grafana/dashboards"
+      - "./configs/grafana/provisioning:/etc/grafana/provisioning"
 
   pyroscope:
     image: grafana/pyroscope:latest

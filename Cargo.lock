@@ -1549,16 +1549,11 @@ dependencies = [
  "chrono",
  "log",
  "opentelemetry",
- "opentelemetry-appender-tracing",
- "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
- "opentelemetry-stdout",
  "opentelemetry_sdk",
  "telemetry-rust",
  "tokio",
  "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
 ]
 
 [[package]]
